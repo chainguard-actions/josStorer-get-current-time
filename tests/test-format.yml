@@ -1,0 +1,42 @@
+name: Test format input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: get-time
+        uses: .
+        with:
+          format: YYYY-MM-DD
+      - name: Assert formattedTime matches YYYY-MM-DD pattern
+        env:
+          ACTUAL: ${{ steps.get-time.outputs.formattedTime }}
+        run: |
+          echo "formattedTime: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: expected 'formattedTime' output to be non-empty"
+            exit 1
+          fi
+          # Validate it matches YYYY-MM-DD format (e.g. 2024-01-15)
+          if ! echo "$ACTUAL" | grep -qE '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'; then
+            echo "FAIL: expected formattedTime to match YYYY-MM-DD, got: $ACTUAL"
+            exit 1
+          fi
+          echo "PASS"
+      - name: Assert time output is still a valid ISO string
+        env:
+          ACTUAL: ${{ steps.get-time.outputs.time }}
+        run: |
+          echo "time: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: expected 'time' output to be non-empty"
+            exit 1
+          fi
+          # ISO time should contain 'T' and 'Z'
+          if ! echo "$ACTUAL" | grep -qE 'T.*Z$'; then
+            echo "FAIL: expected time to be ISO format, got: $ACTUAL"
+            exit 1
+          fi
+          echo "PASS"

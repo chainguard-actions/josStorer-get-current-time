@@ -1,0 +1,21 @@
+{
+  "name": "get-current-time",
+  "version": "2.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "@actions/core": "^1.10.0",
+    "@actions/github": "^5.1.1",
+    "moment": "^2.29.4"
+  },
+  "devDependencies": {
+    "@types/jest": "^28.1.6",
+    "@vercel/ncc": "^0.34.0",
+    "jest": "^28.1.3"
+  },
+  "scripts": {
+    "start": "npm run build",
+    "build": "ncc build index.js -m",
+    "test": "jest --coverage"
+  }
+}

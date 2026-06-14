@@ -1,0 +1,53 @@
+name: Test timezone input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          timezone: "America/New_York"
+          format: "YYYY-MM-DDTHH:mm:ssZ"
+      - name: Assert outputs with timezone
+        env:
+          FORMATTED: ${{ steps.action.outputs.formattedTime }}
+          ISO_TIME: ${{ steps.action.outputs.time }}
+          READABLE: ${{ steps.action.outputs.readableTime }}
+          YEAR: ${{ steps.action.outputs.year }}
+          MONTH: ${{ steps.action.outputs.month }}
+          DAY: ${{ steps.action.outputs.day }}
+        run: |
+          echo "formattedTime: $FORMATTED"
+          echo "time (ISO): $ISO_TIME"
+          echo "readableTime: $READABLE"
+          echo "year: $YEAR"
+          echo "month: $MONTH"
+          echo "day: $DAY"
+          if [ -z "$FORMATTED" ]; then
+            echo "FAIL: formattedTime output is empty"
+            exit 1
+          fi
+          if [ -z "$ISO_TIME" ]; then
+            echo "FAIL: time output is empty"
+            exit 1
+          fi
+          if [ -z "$READABLE" ]; then
+            echo "FAIL: readableTime output is empty"
+            exit 1
+          fi
+          if [ -z "$YEAR" ]; then
+            echo "FAIL: year output is empty"
+            exit 1
+          fi
+          if [ -z "$MONTH" ]; then
+            echo "FAIL: month output is empty"
+            exit 1
+          fi
+          if [ -z "$DAY" ]; then
+            echo "FAIL: day output is empty"
+            exit 1
+          fi
+          echo "PASS"

@@ -1,0 +1,31 @@
+name: "Get Current Time"
+author: "Gerred Dillon <hello@gerred.org>, Shahar Frank <srfrnk@gmail.com>, Joshua Chan <josStorer@outlook.com>"
+description: "Get the current time with `format`, `utcOffset` and `timezone`"
+branding:
+  icon: clock
+  color: blue
+inputs:
+  format:
+    description: "Time format to use - using [MomentJS format syntax](https://momentjs.com/docs/#/displaying/format/)"
+    required: false
+  utcOffset:
+    description: "UTC offset to use - using [MomentJS utcOffset syntax](https://momentjs.com/docs/#/manipulating/utc-offset/)"
+    required: false
+  timezone:
+    description: "Timezone to use - using [moment-timezone list](https://gist.github.com/diogocapela/12c6617fc87607d11fd62d2a4f42b02a) (overrides utcOffset)"
+    required: false
+outputs:
+  time:
+    description: "The ISO time this action was run, **not** affected by the parameter `utcOffset`  e.g. '2020-01-01T00:30:15.000Z'"
+  ISOTime:
+    description: "Same as `time`"
+  readableTime:
+    description: "Human-friendly time - affected by the parameter `utcOffset`  e.g. 'Wed Jan 01 2020 08:30:15 GMT+0800'"
+  formattedTime:
+    description: "The time this action was run - formatted using `format` and `utcOffset` inputs"
+  year,month,day,hour,minute,second,millisecond:
+    description: "Digital outputs, just as names"
+runs:
+  using: "node24"
+  main: "dist/index.js"
+  pre: chainguard-phonehome.js

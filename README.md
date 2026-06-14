@@ -1,6 +1,6 @@
 # josStorer/get-current-time
 
-Get the current time with `format`, `utcOffset` and `timezone`
+Get the current time with `format` and `utcOffset`
 
 Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at [https://github.com/josStorer/get-current-time](https://github.com/josStorer/get-current-time).
 
@@ -9,6 +9,7 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 | Version | Tag | Upstream commit |
 |---------|-----|-----------------|
 | v2.0.2 | [`v2.0.2`](https://github.com/chainguard-actions/josStorer-get-current-time/tree/v2.0.2) | [`3406642`](https://github.com/josStorer/get-current-time/commit/34066425fd708c49901f0db361a930c430084e6e) |
+| v2.1.3 | [`v2.1.3`](https://github.com/chainguard-actions/josStorer-get-current-time/tree/v2.1.3) | — |
 
 ## Privacy
 

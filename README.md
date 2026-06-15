@@ -1,15 +1,137 @@
-# josStorer/get-current-time
+[![Test the action workflow](https://github.com/josStorer/get-current-time/workflows/Test%20the%20action/badge.svg)](https://github.com/josStorer/get-current-time/actions?query=workflow:"Test+the+action")
+[![Codecov](https://codecov.io/gh/josStorer/get-current-time/graph/badge.svg)](https://codecov.io/gh/josStorer/get-current-time)
+[![GitHub release](https://img.shields.io/github/release/josStorer/get-current-time.svg)](https://github.com/josStorer/get-current-time/releases/latest)
+[![GitHub marketplace](https://img.shields.io/badge/marketplace-get--current--time-blue?logo=github)](https://github.com/marketplace/actions/get-current-time)
+[![Repo contributors](https://img.shields.io/github/contributors/josStorer/get-current-time.svg)](https://github.com/josStorer/get-current-time/graphs/contributors)
+[![Open issues](https://img.shields.io/github/issues-raw/josStorer/get-current-time)](https://github.com/josStorer/get-current-time/issues?q=is%3Aissue+is%3Aopen)
+[![Solved issues](https://img.shields.io/github/issues-closed-raw/josStorer/get-current-time/solved?color=4bc51d&label=solved%20issues)](https://github.com/josStorer/get-current-time/issues?q=is%3Aissue+label%3Asolved)
 
-Get the current time with `format` and `utcOffset`
+# Get Current Time Github Action
 
-Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at [https://github.com/josStorer/get-current-time](https://github.com/josStorer/get-current-time).
+This action sets the current ISO8601 time to the `time` output and also provides `readableTime`, `formattedTime`, and
+many more digital outputs like `year`, `day`, `second`, etc. Useful for setting build times in subsequent steps,
+renaming your artifact, or keeping the same recorded time for the entire workflow.
 
-## Versions
+You can view some typical input/output in the [action.test.js](./action.test.js) file.
 
-| Version | Tag | Upstream commit |
-|---------|-----|-----------------|
-| v2.0.2 | [`v2.0.2`](https://github.com/chainguard-actions/josStorer-get-current-time/tree/v2.0.2) | [`3406642`](https://github.com/josStorer/get-current-time/commit/34066425fd708c49901f0db361a930c430084e6e) |
-| v2.1.3 | [`v2.1.3`](https://github.com/chainguard-actions/josStorer-get-current-time/tree/v2.1.3) | — |
+## Inputs
+
+### `format`
+
+Time format to use - using [MomentJS format syntax](https://momentjs.com/docs/#/displaying/format/) - optional
+
+### `utcOffset`
+
+UTC offset to use - using [MomentJS utcOffset syntax](https://momentjs.com/docs/#/manipulating/utc-offset/) - optional
+
+### `timezone`
+
+Timezone to use - check [moment-timezone list](https://gist.github.com/diogocapela/12c6617fc87607d11fd62d2a4f42b02a) -
+optional, if set, utcOffset will be ignored, e.g. "America/Los_Angeles"
+
+## Outputs
+
+### `time`
+
+The ISO time this action was run, **not** affected by the parameter `utcOffset`  e.g. '2020-01-01T00:30:15.000Z'
+
+### `ISOTime`
+
+Same as `time`
+
+### `readableTime`
+
+Human-friendly time - affected by the parameter `utcOffset`  e.g. 'Wed Jan 01 2020 08:30:15 GMT+0800'
+
+### `formattedTime`
+
+The time this action was run - formatted using `format` and `utcOffset` inputs
+
+### `year,month,day,hour,minute,second,millisecond`
+
+Digital outputs, just as names
+
+## Example usage
+
+```yaml
+steps:
+  - name: Get current time
+    uses: josStorer/get-current-time@v2
+    id: current-time
+    with:
+      format: YYYYMMDD-HH
+      utcOffset: "+08:00"
+  - name: Use current time
+    env:
+      TIME: "${{ steps.current-time.outputs.time }}"
+      R_TIME: "${{ steps.current-time.outputs.readableTime }}"
+      F_TIME: "${{ steps.current-time.outputs.formattedTime }}"
+      YEAR: "${{ steps.current-time.outputs.year }}"
+      DAY: "${{ steps.current-time.outputs.day }}"
+    run: echo $TIME $R_TIME $F_TIME $YEAR $DAY
+```
+
+## Run locally
+
+### First
+
+```
+npm install
+```
+
+### Build
+
+```
+npm start
+```
+
+And you'll see the index.js is generated in the dist folder
+
+### Test
+
+```
+npm test
+```
+
+And you'll see the console output as following:
+
+***
+
+**PASS**  ./action.test.js
+
+&ensp;&ensp;action
+
+&ensp;&ensp;&ensp;&ensp;**√** Should load (1 ms)
+
+&ensp;&ensp;&ensp;&ensp;**√** Should correctly set outputs (1 ms)
+
+&ensp;&ensp;&ensp;&ensp;**√** Should correctly set outputs with utcOffset (1 ms)
+
+&ensp;&ensp;&ensp;&ensp;**√** Should correctly set outputs with timezone (1 ms)
+
+&ensp;&ensp;&ensp;&ensp;**√** Should throw error (1 ms)
+
+| File            | %&nbsp;Stmts | %&nbsp;Branch | %&nbsp;Funcs | %&nbsp;Lines | Uncovered&nbsp;Line&nbsp;#s |
+|-----------------|--------------|---------------|--------------|--------------|-----------------------------|
+| All files       | 100          | 100           | 100          | 100          |                             |
+| &nbsp;action.js | 100          | 100           | 100          | 100          |                             |
+
+Test Suites: **1 passed**, 1 total
+
+Tests:       **5 passed**, 5 total
+
+Snapshots:   0 total
+
+Time:        1 s
+
+Ran all test suites.
+
+***
+
+## Credit
+
+This project is forked from [srfrnk/current-time](https://github.com/srfrnk/current-time) and detached since 14 December
+of 2022
 
 ## Privacy
 

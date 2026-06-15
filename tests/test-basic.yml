@@ -1,0 +1,50 @@
+name: Test basic usage (no inputs)
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: get-time
+        uses: .
+      - name: Assert time output is non-empty
+        env:
+          ACTUAL: ${{ steps.get-time.outputs.time }}
+        run: |
+          echo "time: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: expected 'time' output to be non-empty"
+            exit 1
+          fi
+          echo "PASS"
+      - name: Assert ISOTime output is non-empty
+        env:
+          ACTUAL: ${{ steps.get-time.outputs.ISOTime }}
+        run: |
+          echo "ISOTime: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: expected 'ISOTime' output to be non-empty"
+            exit 1
+          fi
+          echo "PASS"
+      - name: Assert readableTime output is non-empty
+        env:
+          ACTUAL: ${{ steps.get-time.outputs.readableTime }}
+        run: |
+          echo "readableTime: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: expected 'readableTime' output to be non-empty"
+            exit 1
+          fi
+          echo "PASS"
+      - name: Assert year output is non-empty
+        env:
+          ACTUAL: ${{ steps.get-time.outputs.year }}
+        run: |
+          echo "year: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: expected 'year' output to be non-empty"
+            exit 1
+          fi
+          echo "PASS"

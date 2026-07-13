@@ -1,0 +1,50 @@
+name: Test timezone input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: get_time
+        uses: .
+        with:
+          format: "YYYY-MM-DDTHH:mm:ssZ"
+          timezone: "America/New_York"
+      - name: Assert formattedTime is non-empty and contains timezone offset
+        env:
+          FORMATTED: ${{ steps.get_time.outputs.formattedTime }}
+        run: |
+          echo "formattedTime: $FORMATTED"
+          if [ -z "$FORMATTED" ]; then
+            echo "FAIL: 'formattedTime' output is empty"
+            exit 1
+          fi
+          # Should match ISO-like format with timezone offset e.g. 2024-01-15T10:30:00-05:00
+          if ! echo "$FORMATTED" | grep -qE '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}[+-][0-9]{2}:[0-9]{2}$'; then
+            echo "FAIL: 'formattedTime' does not match expected pattern: $FORMATTED"
+            exit 1
+          fi
+          echo "PASS: formattedTime=$FORMATTED"
+      - name: Assert time (ISO UTC) output is non-empty
+        env:
+          TIME_OUT: ${{ steps.get_time.outputs.time }}
+        run: |
+          echo "time: $TIME_OUT"
+          if [ -z "$TIME_OUT" ]; then
+            echo "FAIL: 'time' output is empty"
+            exit 1
+          fi
+          echo "PASS: time=$TIME_OUT"
+      - name: Assert ISOTime equals time output
+        env:
+          TIME_OUT: ${{ steps.get_time.outputs.time }}
+          ISO_TIME: ${{ steps.get_time.outputs.ISOTime }}
+        run: |
+          echo "time: $TIME_OUT"
+          echo "ISOTime: $ISO_TIME"
+          if [ "$TIME_OUT" != "$ISO_TIME" ]; then
+            echo "FAIL: 'time' and 'ISOTime' should be equal but got '$TIME_OUT' vs '$ISO_TIME'"
+            exit 1
+          fi
+          echo "PASS: time and ISOTime match"

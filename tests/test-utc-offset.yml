@@ -1,0 +1,33 @@
+name: Test utcOffset input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: get_time
+        uses: .
+        with:
+          format: "Z"
+          utcOffset: "+08:00"
+      - name: Assert formattedTime reflects +08:00 offset
+        env:
+          FORMATTED: ${{ steps.get_time.outputs.formattedTime }}
+        run: |
+          echo "formattedTime: $FORMATTED"
+          if [ "$FORMATTED" != "+08:00" ]; then
+            echo "FAIL: expected '+08:00' but got '$FORMATTED'"
+            exit 1
+          fi
+          echo "PASS: formattedTime=$FORMATTED"
+      - name: Assert readableTime is non-empty
+        env:
+          READABLE: ${{ steps.get_time.outputs.readableTime }}
+        run: |
+          echo "readableTime: $READABLE"
+          if [ -z "$READABLE" ]; then
+            echo "FAIL: 'readableTime' output is empty"
+            exit 1
+          fi
+          echo "PASS: readableTime=$READABLE"

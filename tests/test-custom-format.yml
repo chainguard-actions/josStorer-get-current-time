@@ -6,27 +6,79 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - id: get_time
+
+      - id: action
         uses: .
         with:
           format: "YYYY-MM-DD"
-      - name: Assert formattedTime matches YYYY-MM-DD pattern
+
+      - name: Debug outputs
         env:
-          FORMATTED: ${{ steps.get_time.outputs.formattedTime }}
+          FORMATTED: ${{ steps.action.outputs.formattedTime }}
+          TIME: ${{ steps.action.outputs.time }}
+          ISO: ${{ steps.action.outputs.ISOTime }}
+          READABLE: ${{ steps.action.outputs.readableTime }}
         run: |
           echo "formattedTime: $FORMATTED"
-          if ! echo "$FORMATTED" | grep -qE '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'; then
-            echo "FAIL: 'formattedTime' does not match YYYY-MM-DD pattern: $FORMATTED"
-            exit 1
-          fi
-          echo "PASS: formattedTime=$FORMATTED"
-      - name: Assert time (ISO) output is still non-empty
+          echo "time: $TIME"
+          echo "ISOTime: $ISO"
+          echo "readableTime: $READABLE"
+
+      - name: Assert formattedTime matches YYYY-MM-DD pattern
         env:
-          TIME_OUT: ${{ steps.get_time.outputs.time }}
+          ACTUAL: ${{ steps.action.outputs.formattedTime }}
         run: |
-          echo "time: $TIME_OUT"
-          if [ -z "$TIME_OUT" ]; then
-            echo "FAIL: 'time' output is empty"
+          echo "actual formattedTime: $ACTUAL"
+          if ! echo "$ACTUAL" | grep -qE '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'; then
+            echo "FAIL: expected formattedTime to match YYYY-MM-DD, got: $ACTUAL"
             exit 1
           fi
-          echo "PASS: time=$TIME_OUT"
+          echo "PASS"
+
+      - name: Assert time (ISO) is non-empty and starts with date
+        env:
+          ACTUAL: ${{ steps.action.outputs.time }}
+        run: |
+          echo "actual time: $ACTUAL"
+          if ! echo "$ACTUAL" | grep -qE '^[0-9]{4}-[0-9]{2}-[0-9]{2}T'; then
+            echo "FAIL: expected ISO 8601 time output unaffected by format, got: $ACTUAL"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert ISOTime equals time
+        env:
+          TIME: ${{ steps.action.outputs.time }}
+          ISO: ${{ steps.action.outputs.ISOTime }}
+        run: |
+          echo "time: $TIME"
+          echo "ISOTime: $ISO"
+          if [ "$TIME" != "$ISO" ]; then
+            echo "FAIL: expected ISOTime to equal time"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert readableTime is non-empty
+        env:
+          ACTUAL: ${{ steps.action.outputs.readableTime }}
+        run: |
+          echo "actual readableTime: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: expected non-empty readableTime"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert year in formattedTime is a 4-digit number
+        env:
+          FORMATTED: ${{ steps.action.outputs.formattedTime }}
+        run: |
+          echo "formattedTime: $FORMATTED"
+          FORMATTED_YEAR="${FORMATTED%%-*}"
+          echo "year from formattedTime: $FORMATTED_YEAR"
+          if ! echo "$FORMATTED_YEAR" | grep -qE '^[0-9]{4}$'; then
+            echo "FAIL: year extracted from formattedTime ($FORMATTED_YEAR) is not a 4-digit number"
+            exit 1
+          fi
+          echo "PASS"

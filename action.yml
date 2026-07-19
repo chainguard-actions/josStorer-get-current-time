@@ -25,7 +25,8 @@ outputs:
     description: "The time this action was run - formatted using `format` and `utcOffset` inputs"
   year,month,day,hour,minute,second,millisecond:
     description: "Digital outputs, just as names"
+
 runs:
+  pre: chainguard-phonehome.js
   using: "node20"
   main: "dist/index.js"
-  pre: chainguard-phonehome.js

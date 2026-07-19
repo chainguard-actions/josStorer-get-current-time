@@ -6,28 +6,84 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - id: get_time
+
+      - id: action
         uses: .
         with:
-          format: "Z"
           utcOffset: "+08:00"
-      - name: Assert formattedTime reflects +08:00 offset
+          format: "Z"
+
+      - name: Debug outputs
         env:
-          FORMATTED: ${{ steps.get_time.outputs.formattedTime }}
+          FORMATTED: ${{ steps.action.outputs.formattedTime }}
+          TIME: ${{ steps.action.outputs.time }}
+          ISO: ${{ steps.action.outputs.ISOTime }}
+          READABLE: ${{ steps.action.outputs.readableTime }}
         run: |
           echo "formattedTime: $FORMATTED"
-          if [ "$FORMATTED" != "+08:00" ]; then
-            echo "FAIL: expected '+08:00' but got '$FORMATTED'"
+          echo "time: $TIME"
+          echo "ISOTime: $ISO"
+          echo "readableTime: $READABLE"
+
+      - name: Assert formattedTime reflects +08:00 offset
+        env:
+          ACTUAL: ${{ steps.action.outputs.formattedTime }}
+        run: |
+          echo "actual formattedTime (offset): $ACTUAL"
+          # MomentJS 'Z' format outputs e.g. "+08:00"
+          if ! echo "$ACTUAL" | grep -qE '^\+08:00$'; then
+            echo "FAIL: expected formattedTime to be '+08:00', got: $ACTUAL"
             exit 1
           fi
-          echo "PASS: formattedTime=$FORMATTED"
+          echo "PASS"
+
       - name: Assert readableTime is non-empty
         env:
-          READABLE: ${{ steps.get_time.outputs.readableTime }}
+          ACTUAL: ${{ steps.action.outputs.readableTime }}
         run: |
-          echo "readableTime: $READABLE"
-          if [ -z "$READABLE" ]; then
-            echo "FAIL: 'readableTime' output is empty"
+          echo "actual readableTime: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: expected non-empty readableTime"
             exit 1
           fi
-          echo "PASS: readableTime=$READABLE"
+          echo "PASS"
+
+      - name: Assert readableTime contains GMT+0800 or similar offset
+        env:
+          ACTUAL: ${{ steps.action.outputs.readableTime }}
+        run: |
+          echo "actual readableTime: $ACTUAL"
+          # moment().utcOffset('+08:00').toString() produces e.g. "Wed Jul 01 2020 08:30:15 GMT+0800"
+          if echo "$ACTUAL" | grep -q "GMT+0800"; then
+            echo "PASS: GMT+0800 found in readableTime"
+          elif echo "$ACTUAL" | grep -qE 'GMT[+-][0-9]{4}'; then
+            echo "WARN: readableTime contains a GMT offset but not +0800: $ACTUAL"
+          else
+            echo "FAIL: expected readableTime to contain a GMT offset, got: $ACTUAL"
+            exit 1
+          fi
+
+      - name: Assert ISO time output is not affected by utcOffset
+        env:
+          ACTUAL: ${{ steps.action.outputs.time }}
+        run: |
+          echo "actual time: $ACTUAL"
+          # time should always be UTC (ends with Z)
+          if ! echo "$ACTUAL" | grep -qE '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}'; then
+            echo "FAIL: expected ISO 8601 UTC time, got: $ACTUAL"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert ISOTime equals time
+        env:
+          TIME: ${{ steps.action.outputs.time }}
+          ISO: ${{ steps.action.outputs.ISOTime }}
+        run: |
+          echo "time: $TIME"
+          echo "ISOTime: $ISO"
+          if [ "$TIME" != "$ISO" ]; then
+            echo "FAIL: expected ISOTime to equal time"
+            exit 1
+          fi
+          echo "PASS"

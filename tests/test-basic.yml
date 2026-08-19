@@ -1,0 +1,80 @@
+name: Test basic usage (no inputs)
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+
+      - name: Assert time output is non-empty ISO string
+        env:
+          TIME: ${{ steps.action.outputs.time }}
+          ISO_TIME: ${{ steps.action.outputs.ISOTime }}
+          READABLE: ${{ steps.action.outputs.readableTime }}
+        run: |
+          echo "time: $TIME"
+          echo "ISOTime: $ISO_TIME"
+          echo "readableTime: $READABLE"
+
+          if [ -z "$TIME" ]; then
+            echo "FAIL: time output is empty"
+            exit 1
+          fi
+          echo "PASS: time is non-empty"
+
+          if [ -z "$ISO_TIME" ]; then
+            echo "FAIL: ISOTime output is empty"
+            exit 1
+          fi
+          echo "PASS: ISOTime is non-empty"
+
+          if [ -z "$READABLE" ]; then
+            echo "FAIL: readableTime output is empty"
+            exit 1
+          fi
+          echo "PASS: readableTime is non-empty"
+
+      - name: Assert time looks like ISO 8601
+        env:
+          TIME: ${{ steps.action.outputs.time }}
+        run: |
+          echo "time: $TIME"
+          # ISO 8601 format ends with Z and contains T separator
+          if ! echo "$TIME" | grep -qE '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+Z$'; then
+            echo "FAIL: time '$TIME' does not look like ISO 8601 (e.g. 2020-01-01T00:30:15.000Z)"
+            exit 1
+          fi
+          echo "PASS: time matches ISO 8601 format"
+
+      - name: Assert digital outputs are numeric
+        env:
+          YEAR: ${{ steps.action.outputs.year }}
+          MONTH: ${{ steps.action.outputs.month }}
+          DAY: ${{ steps.action.outputs.day }}
+          HOUR: ${{ steps.action.outputs.hour }}
+          MINUTE: ${{ steps.action.outputs.minute }}
+          SECOND: ${{ steps.action.outputs.second }}
+          MILLISECOND: ${{ steps.action.outputs.millisecond }}
+        run: |
+          echo "year=$YEAR month=$MONTH day=$DAY hour=$HOUR minute=$MINUTE second=$SECOND ms=$MILLISECOND"
+          for val in "$YEAR" "$MONTH" "$DAY" "$HOUR" "$MINUTE" "$SECOND" "$MILLISECOND"; do
+            if ! echo "$val" | grep -qE '^[0-9]+$'; then
+              echo "FAIL: '$val' is not a numeric output"
+              exit 1
+            fi
+          done
+          echo "PASS: all digital outputs are numeric"
+
+      - name: Assert year is reasonable
+        env:
+          YEAR: ${{ steps.action.outputs.year }}
+        run: |
+          echo "year: $YEAR"
+          if [ "$YEAR" -lt 2024 ] || [ "$YEAR" -gt 2100 ]; then
+            echo "FAIL: year '$YEAR' is out of expected range [2024, 2100]"
+            exit 1
+          fi
+          echo "PASS: year is in expected range"

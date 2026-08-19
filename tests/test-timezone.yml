@@ -6,68 +6,59 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - id: action
+
+      - id: action_utc
         uses: .
         with:
-          format: "z"
-          timezone: "America/New_York"
-      - name: Assert outputs with timezone
+          timezone: "UTC"
+          format: Z
+
+      - name: Assert formattedTime reflects UTC timezone offset
         env:
-          FORMATTED: ${{ steps.action.outputs.formattedTime }}
-          ISO_TIME: ${{ steps.action.outputs.time }}
-          READABLE: ${{ steps.action.outputs.readableTime }}
-          YEAR: ${{ steps.action.outputs.year }}
-          MONTH: ${{ steps.action.outputs.month }}
-          DAY: ${{ steps.action.outputs.day }}
-          HOUR: ${{ steps.action.outputs.hour }}
-          MINUTE: ${{ steps.action.outputs.minute }}
-          SECOND: ${{ steps.action.outputs.second }}
-          MILLISECOND: ${{ steps.action.outputs.millisecond }}
+          FORMATTED: ${{ steps.action_utc.outputs.formattedTime }}
         run: |
-          echo "formattedTime: $FORMATTED"
-          echo "time: $ISO_TIME"
-          echo "readableTime: $READABLE"
-          echo "year: $YEAR"
-          echo "month: $MONTH"
-          echo "day: $DAY"
-          echo "hour: $HOUR"
-          echo "minute: $MINUTE"
-          echo "second: $SECOND"
-          echo "millisecond: $MILLISECOND"
-          if [ -z "$ISO_TIME" ]; then
-            echo "FAIL: time output is empty"
+          echo "formattedTime (UTC): $FORMATTED"
+          # UTC timezone should produce +00:00 offset
+          if [ "$FORMATTED" != "+00:00" ]; then
+            echo "FAIL: expected '+00:00' for UTC timezone but got '$FORMATTED'"
             exit 1
           fi
-          if [ -z "$READABLE" ]; then
-            echo "FAIL: readableTime output is empty"
+          echo "PASS: formattedTime correctly shows +00:00 for UTC timezone"
+
+      - id: action_tz
+        uses: .
+        with:
+          timezone: "Asia/Tokyo"
+          format: "YYYY-MM-DD HH:mm:ss Z"
+
+      - name: Assert formattedTime for Asia/Tokyo contains +09:00 offset
+        env:
+          FORMATTED: ${{ steps.action_tz.outputs.formattedTime }}
+        run: |
+          echo "formattedTime (Asia/Tokyo): $FORMATTED"
+          # Asia/Tokyo is UTC+9, so the offset should be +09:00
+          if ! echo "$FORMATTED" | grep -q "+09:00"; then
+            echo "FAIL: expected '+09:00' in formattedTime for Asia/Tokyo but got '$FORMATTED'"
             exit 1
           fi
-          if [ -z "$YEAR" ]; then
-            echo "FAIL: year output is empty"
+          echo "PASS: formattedTime contains +09:00 for Asia/Tokyo"
+
+      - name: Assert timezone overrides utcOffset (timezone wins)
+        id: action_override
+        uses: .
+        with:
+          timezone: "UTC"
+          utcOffset: "+08:00"
+          format: Z
+
+      - name: Assert timezone takes precedence over utcOffset
+        env:
+          FORMATTED: ${{ steps.action_override.outputs.formattedTime }}
+        run: |
+          echo "formattedTime (timezone=UTC, utcOffset=+08:00): $FORMATTED"
+          # timezone should override utcOffset, so result should be +00:00
+          if [ "$FORMATTED" != "+00:00" ]; then
+            echo "FAIL: expected timezone 'UTC' (+00:00) to override utcOffset '+08:00', but got '$FORMATTED'"
             exit 1
           fi
-          if [ -z "$MONTH" ]; then
-            echo "FAIL: month output is empty"
-            exit 1
-          fi
-          if [ -z "$DAY" ]; then
-            echo "FAIL: day output is empty"
-            exit 1
-          fi
-          if [ -z "$HOUR" ]; then
-            echo "FAIL: hour output is empty"
-            exit 1
-          fi
-          if [ -z "$MINUTE" ]; then
-            echo "FAIL: minute output is empty"
-            exit 1
-          fi
-          if [ -z "$SECOND" ]; then
-            echo "FAIL: second output is empty"
-            exit 1
-          fi
-          if [ -z "$MILLISECOND" ]; then
-            echo "FAIL: millisecond output is empty"
-            exit 1
-          fi
-          echo "PASS"
+          echo "PASS: timezone correctly overrides utcOffset"

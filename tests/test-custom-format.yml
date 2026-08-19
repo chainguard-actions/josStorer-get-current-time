@@ -1,0 +1,37 @@
+name: Test custom format input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: get_time
+        uses: .
+        with:
+          format: "YYYY-MM-DD"
+      - name: Assert formattedTime matches YYYY-MM-DD pattern
+        env:
+          FORMATTED: ${{ steps.get_time.outputs.formattedTime }}
+        run: |
+          echo "formattedTime: $FORMATTED"
+          if [ -z "$FORMATTED" ]; then
+            echo "FAIL: expected 'formattedTime' output to be non-empty"
+            exit 1
+          fi
+          # Validate the format matches YYYY-MM-DD (e.g. 2024-01-15)
+          if ! echo "$FORMATTED" | grep -qE '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'; then
+            echo "FAIL: formattedTime '$FORMATTED' does not match YYYY-MM-DD pattern"
+            exit 1
+          fi
+          echo "PASS: formattedTime=$FORMATTED"
+      - name: Assert time (ISO) output is still non-empty
+        env:
+          TIME_OUT: ${{ steps.get_time.outputs.time }}
+        run: |
+          echo "time: $TIME_OUT"
+          if [ -z "$TIME_OUT" ]; then
+            echo "FAIL: expected 'time' output to be non-empty"
+            exit 1
+          fi
+          echo "PASS: time=$TIME_OUT"

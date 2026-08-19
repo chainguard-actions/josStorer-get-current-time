@@ -1,0 +1,55 @@
+name: Test utcOffset input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        with:
+          utcOffset: "+00:00"
+          format: Z
+
+      - name: Assert formattedTime reflects UTC+00:00 offset
+        env:
+          FORMATTED: ${{ steps.action.outputs.formattedTime }}
+        run: |
+          echo "formattedTime (offset): $FORMATTED"
+          # With format=Z and utcOffset=+00:00, formattedTime should be +00:00
+          if [ "$FORMATTED" != "+00:00" ]; then
+            echo "FAIL: expected '+00:00' but got '$FORMATTED'"
+            exit 1
+          fi
+          echo "PASS: formattedTime correctly shows +00:00 offset"
+
+      - name: Assert time (ISO) is not affected by utcOffset
+        env:
+          TIME: ${{ steps.action.outputs.time }}
+        run: |
+          echo "time: $TIME"
+          # ISO time always ends with Z (UTC), regardless of utcOffset
+          if ! echo "$TIME" | grep -qE 'Z$'; then
+            echo "FAIL: time '$TIME' should end with Z (UTC), not be affected by utcOffset"
+            exit 1
+          fi
+          echo "PASS: time ends with Z (UTC), not affected by utcOffset"
+
+      - id: action_pos
+        uses: .
+        with:
+          utcOffset: "+08:00"
+          format: Z
+
+      - name: Assert formattedTime reflects UTC+08:00 offset
+        env:
+          FORMATTED: ${{ steps.action_pos.outputs.formattedTime }}
+        run: |
+          echo "formattedTime (offset +08:00): $FORMATTED"
+          if [ "$FORMATTED" != "+08:00" ]; then
+            echo "FAIL: expected '+08:00' but got '$FORMATTED'"
+            exit 1
+          fi
+          echo "PASS: formattedTime correctly shows +08:00 offset"

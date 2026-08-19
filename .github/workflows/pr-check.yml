@@ -1,0 +1,23 @@
+name: PR check
+on:
+  pull_request:
+    branches:
+      - master
+
+permissions: {}
+
+jobs:
+  run_test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3
+      - run: npm install
+      - run: npm test
+
+  get_output:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3
+      - run: npm install
+      - run: npm run build
+      - run: node ./dist/index.js

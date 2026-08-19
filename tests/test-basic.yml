@@ -6,45 +6,92 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - id: get-time
+      - id: get_time
         uses: .
-      - name: Assert time output is non-empty
+
+      - name: Assert time output is non-empty and ISO format
         env:
-          ACTUAL: ${{ steps.get-time.outputs.time }}
+          TIME_OUT: ${{ steps.get_time.outputs.time }}
+          ISO_TIME: ${{ steps.get_time.outputs.ISOTime }}
         run: |
-          echo "time: $ACTUAL"
-          if [ -z "$ACTUAL" ]; then
-            echo "FAIL: expected 'time' output to be non-empty"
+          echo "time: $TIME_OUT"
+          echo "ISOTime: $ISO_TIME"
+          if [ -z "$TIME_OUT" ]; then
+            echo "FAIL: time output is empty"
             exit 1
           fi
-          echo "PASS"
-      - name: Assert ISOTime output is non-empty
-        env:
-          ACTUAL: ${{ steps.get-time.outputs.ISOTime }}
-        run: |
-          echo "ISOTime: $ACTUAL"
-          if [ -z "$ACTUAL" ]; then
-            echo "FAIL: expected 'ISOTime' output to be non-empty"
+          if [ -z "$ISO_TIME" ]; then
+            echo "FAIL: ISOTime output is empty"
             exit 1
           fi
-          echo "PASS"
-      - name: Assert readableTime output is non-empty
-        env:
-          ACTUAL: ${{ steps.get-time.outputs.readableTime }}
-        run: |
-          echo "readableTime: $ACTUAL"
-          if [ -z "$ACTUAL" ]; then
-            echo "FAIL: expected 'readableTime' output to be non-empty"
+          # Validate ISO 8601 format (e.g. 2020-01-01T00:30:15.000Z)
+          if ! echo "$TIME_OUT" | grep -qE '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+Z$'; then
+            echo "FAIL: time output '$TIME_OUT' does not match ISO 8601 format"
             exit 1
           fi
-          echo "PASS"
-      - name: Assert year output is non-empty
-        env:
-          ACTUAL: ${{ steps.get-time.outputs.year }}
-        run: |
-          echo "year: $ACTUAL"
-          if [ -z "$ACTUAL" ]; then
-            echo "FAIL: expected 'year' output to be non-empty"
+          if ! echo "$ISO_TIME" | grep -qE '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+Z$'; then
+            echo "FAIL: ISOTime output '$ISO_TIME' does not match ISO 8601 format"
             exit 1
           fi
-          echo "PASS"
+          echo "PASS: time and ISOTime are valid ISO timestamps"
+
+      - name: Assert time and ISOTime are equal
+        env:
+          TIME_OUT: ${{ steps.get_time.outputs.time }}
+          ISO_TIME: ${{ steps.get_time.outputs.ISOTime }}
+        run: |
+          echo "time: $TIME_OUT"
+          echo "ISOTime: $ISO_TIME"
+          if [ "$TIME_OUT" != "$ISO_TIME" ]; then
+            echo "FAIL: time and ISOTime should be equal"
+            exit 1
+          fi
+          echo "PASS: time equals ISOTime"
+
+      - name: Assert readableTime is non-empty
+        env:
+          READABLE: ${{ steps.get_time.outputs.readableTime }}
+        run: |
+          echo "readableTime: $READABLE"
+          if [ -z "$READABLE" ]; then
+            echo "FAIL: readableTime output is empty"
+            exit 1
+          fi
+          echo "PASS: readableTime is non-empty"
+
+      - name: Assert digital outputs are numeric
+        env:
+          YEAR: ${{ steps.get_time.outputs.year }}
+          MONTH: ${{ steps.get_time.outputs.month }}
+          DAY: ${{ steps.get_time.outputs.day }}
+          HOUR: ${{ steps.get_time.outputs.hour }}
+          MINUTE: ${{ steps.get_time.outputs.minute }}
+          SECOND: ${{ steps.get_time.outputs.second }}
+          MILLISECOND: ${{ steps.get_time.outputs.millisecond }}
+        run: |
+          echo "year=$YEAR month=$MONTH day=$DAY hour=$HOUR minute=$MINUTE second=$SECOND millisecond=$MILLISECOND"
+          for name_val in "year:$YEAR" "month:$MONTH" "day:$DAY" "hour:$HOUR" "minute:$MINUTE" "second:$SECOND" "millisecond:$MILLISECOND"; do
+            name="${name_val%%:*}"
+            val="${name_val#*:}"
+            if [ -z "$val" ]; then
+              echo "FAIL: $name output is empty"
+              exit 1
+            fi
+            if ! echo "$val" | grep -qE '^[0-9]+$'; then
+              echo "FAIL: $name output '$val' is not numeric"
+              exit 1
+            fi
+          done
+          echo "PASS: all digital outputs are numeric"
+
+      - name: Assert year is current year
+        env:
+          YEAR: ${{ steps.get_time.outputs.year }}
+        run: |
+          CURRENT_YEAR=$(date -u +%Y)
+          echo "year from action: $YEAR, current year: $CURRENT_YEAR"
+          if [ "$YEAR" != "$CURRENT_YEAR" ]; then
+            echo "FAIL: year '$YEAR' does not match current year '$CURRENT_YEAR'"
+            exit 1
+          fi
+          echo "PASS: year matches current year"

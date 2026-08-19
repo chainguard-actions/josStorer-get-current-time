@@ -1,0 +1,58 @@
+name: Test with utcOffset input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      # Use utcOffset=+08:00 and format to get the hour in that timezone
+      - id: get_time
+        uses: .
+        with:
+          utcOffset: "+08:00"
+          format: "Z"
+
+      - name: Assert formattedTime reflects +08:00 offset
+        env:
+          FORMATTED: ${{ steps.get_time.outputs.formattedTime }}
+        run: |
+          echo "formattedTime (offset): $FORMATTED"
+          if [ -z "$FORMATTED" ]; then
+            echo "FAIL: formattedTime output is empty"
+            exit 1
+          fi
+          # MomentJS "Z" format outputs the UTC offset, e.g. "+08:00"
+          if ! echo "$FORMATTED" | grep -qE '^\+08:00$'; then
+            echo "FAIL: formattedTime '$FORMATTED' does not show +08:00 offset"
+            exit 1
+          fi
+          echo "PASS: formattedTime shows correct UTC offset +08:00"
+
+      - name: Assert time output is UTC ISO format (not affected by utcOffset)
+        env:
+          TIME_OUT: ${{ steps.get_time.outputs.time }}
+        run: |
+          echo "time: $TIME_OUT"
+          if ! echo "$TIME_OUT" | grep -qE '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+Z$'; then
+            echo "FAIL: time output '$TIME_OUT' is not UTC ISO format"
+            exit 1
+          fi
+          echo "PASS: time output is UTC ISO format (unaffected by utcOffset)"
+
+      - name: Assert readableTime is non-empty and contains offset info
+        env:
+          READABLE: ${{ steps.get_time.outputs.readableTime }}
+        run: |
+          echo "readableTime: $READABLE"
+          if [ -z "$READABLE" ]; then
+            echo "FAIL: readableTime output is empty"
+            exit 1
+          fi
+          # readableTime should contain GMT+0800 or similar offset indicator
+          if ! echo "$READABLE" | grep -qiE 'GMT\+08'; then
+            echo "FAIL: readableTime '$READABLE' does not contain GMT+08 offset"
+            exit 1
+          fi
+          echo "PASS: readableTime contains expected GMT+08 offset"

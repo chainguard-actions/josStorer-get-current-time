@@ -1,0 +1,54 @@
+name: Test custom format input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: get-time
+        uses: .
+        with:
+          format: "YYYY-MM-DD"
+      - name: Assert formattedTime matches YYYY-MM-DD pattern
+        env:
+          ACTUAL: ${{ steps.get-time.outputs.formattedTime }}
+        run: |
+          echo "formattedTime: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: expected 'formattedTime' output to be non-empty"
+            exit 1
+          fi
+          if ! echo "$ACTUAL" | grep -qE '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'; then
+            echo "FAIL: expected 'formattedTime' to match YYYY-MM-DD, got: $ACTUAL"
+            exit 1
+          fi
+          echo "PASS: formattedTime=$ACTUAL"
+      - name: Assert time (ISO) output is still non-empty and unaffected by format
+        env:
+          ACTUAL: ${{ steps.get-time.outputs.time }}
+        run: |
+          echo "time: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: expected 'time' output to be non-empty"
+            exit 1
+          fi
+          # ISO time should contain 'T' and 'Z' (UTC ISO 8601)
+          if ! echo "$ACTUAL" | grep -qE 'T.*Z$'; then
+            echo "FAIL: expected 'time' to be ISO 8601 format, got: $ACTUAL"
+            exit 1
+          fi
+          echo "PASS: time=$ACTUAL"
+      - name: Assert year in formattedTime matches year output
+        env:
+          FORMATTED: ${{ steps.get-time.outputs.formattedTime }}
+          YEAR: ${{ steps.get-time.outputs.year }}
+        run: |
+          echo "formattedTime: $FORMATTED"
+          echo "year: $YEAR"
+          FORMATTED_YEAR=$(echo "$FORMATTED" | cut -d'-' -f1)
+          if [ "$FORMATTED_YEAR" != "$YEAR" ]; then
+            echo "FAIL: year in formattedTime ($FORMATTED_YEAR) does not match year output ($YEAR)"
+            exit 1
+          fi
+          echo "PASS"

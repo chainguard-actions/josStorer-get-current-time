@@ -1,0 +1,68 @@
+name: Test with utcOffset input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: get-time
+        uses: .
+        with:
+          format: "HH:mm:ss Z"
+          utcOffset: "+08:00"
+      - name: Assert formattedTime contains +08:00 offset
+        env:
+          ACTUAL: ${{ steps.get-time.outputs.formattedTime }}
+        run: |
+          echo "formattedTime: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: expected 'formattedTime' output to be non-empty"
+            exit 1
+          fi
+          if ! echo "$ACTUAL" | grep -q "+08:00"; then
+            echo "FAIL: expected 'formattedTime' to contain '+08:00', got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"
+      - name: Assert time output is in UTC (not affected by utcOffset)
+        env:
+          ACTUAL: ${{ steps.get-time.outputs.time }}
+        run: |
+          echo "time: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: expected 'time' output to be non-empty"
+            exit 1
+          fi
+          # ISO time should end with 'Z' indicating UTC
+          if ! echo "$ACTUAL" | grep -qE 'Z$'; then
+            echo "FAIL: expected 'time' to end with 'Z' (UTC), got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"
+      - name: Assert ISOTime is non-empty and matches time
+        env:
+          TIME: ${{ steps.get-time.outputs.time }}
+          ISO_TIME: ${{ steps.get-time.outputs.ISOTime }}
+        run: |
+          echo "time: $TIME"
+          echo "ISOTime: $ISO_TIME"
+          if [ -z "$ISO_TIME" ]; then
+            echo "FAIL: expected 'ISOTime' output to be non-empty"
+            exit 1
+          fi
+          if [ "$TIME" != "$ISO_TIME" ]; then
+            echo "FAIL: expected 'time' and 'ISOTime' to be equal"
+            exit 1
+          fi
+          echo "PASS"
+      - name: Assert readableTime is non-empty
+        env:
+          ACTUAL: ${{ steps.get-time.outputs.readableTime }}
+        run: |
+          echo "readableTime: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: expected 'readableTime' output to be non-empty"
+            exit 1
+          fi
+          echo "PASS"

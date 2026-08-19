@@ -1,0 +1,48 @@
+name: Test utcOffset input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: get-time
+        uses: .
+        with:
+          format: YYYY-MM-DD HH:mm:ss Z
+          utcOffset: "+08:00"
+      - name: Assert formattedTime contains +08:00 offset
+        env:
+          ACTUAL: ${{ steps.get-time.outputs.formattedTime }}
+        run: |
+          echo "formattedTime: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: expected 'formattedTime' to be non-empty"
+            exit 1
+          fi
+          if ! echo "$ACTUAL" | grep -q "+08:00"; then
+            echo "FAIL: expected 'formattedTime' to contain '+08:00', got: $ACTUAL"
+            exit 1
+          fi
+          echo "PASS"
+      - name: Assert readableTime is non-empty
+        env:
+          ACTUAL: ${{ steps.get-time.outputs.readableTime }}
+        run: |
+          echo "readableTime: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: expected 'readableTime' to be non-empty"
+            exit 1
+          fi
+          echo "PASS"
+      - name: Assert time (ISO) is not affected by utcOffset
+        env:
+          ACTUAL: ${{ steps.get-time.outputs.time }}
+        run: |
+          echo "time: $ACTUAL"
+          # ISO time should end with Z (UTC) regardless of utcOffset
+          if ! echo "$ACTUAL" | grep -qE 'Z$'; then
+            echo "FAIL: expected 'time' to be in UTC (ending with Z), got: $ACTUAL"
+            exit 1
+          fi
+          echo "PASS"
